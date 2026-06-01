@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f5f5f7;
+  color: #111827;
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+.promo-swiper {
+  padding-inline: 2px;
+}
+
+.promo-swiper .swiper-pagination-bullet {
+  background: #0f172a;
+}
+
+.promo-swiper .swiper-pagination-bullet-active {
+  background: #0f172a;
+}
+
+.hide-scrollbar {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+	display: none;
+}
