@@ -100,31 +100,25 @@ export async function createOrder(
 				? 'Ожидает оплаты'
 				: 'Оплата при получении'
 
+		const paymentExpiresAt =
+			data.paymentMethod === 'Картой онлайн'
+				? new Date(Date.now() + 30 * 60 * 1000)
+				: null
+
 		const orderResult = await client.query(
 			`
-			INSERT INTO orders (
-				user_id,
-				total_price,
-				delivery_address,
-				payment_method,
-				status,
-				payment_status,
-				payment_expires_at
-			)
-			VALUES (
-				$1,
-				$2,
-				$3,
-				$4,
-				$5,
-				$6,
-				CASE
-					WHEN $4 = 'Картой онлайн' THEN CURRENT_TIMESTAMP + INTERVAL '30 minutes'
-					ELSE NULL
-				END
-			)
-			RETURNING *
-			`,
+	INSERT INTO orders (
+		user_id,
+		total_price,
+		delivery_address,
+		payment_method,
+		status,
+		payment_status,
+		payment_expires_at
+	)
+	VALUES ($1, $2, $3, $4, $5, $6, $7)
+	RETURNING *
+	`,
 			[
 				userId,
 				totalPrice,
@@ -132,9 +126,9 @@ export async function createOrder(
 				data.paymentMethod,
 				orderStatus,
 				paymentStatus,
+				paymentExpiresAt,
 			],
 		)
-
 		const order = orderResult.rows[0]
 
 		for (const item of cartResult.rows) {

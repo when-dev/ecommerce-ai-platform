@@ -7,6 +7,7 @@ import { useFavoritesStore } from '../favorites/favoritesStore'
 import { useOrderStore } from '../orders/orderStore'
 import { uploadAvatarRequest } from './profileApi'
 import { useProfileModalStore } from './profileModalStore'
+import { usePaymentModalStore } from '../payment/paymentModalStore'
 
 function OrderPaymentBadge({
 	order,
@@ -114,6 +115,8 @@ function ProfileModalContent({ user, close }: ProfileModalContentProps) {
 	const fetchOrders = useOrderStore(state => state.fetchOrders)
 	const isOrdersLoading = useOrderStore(state => state.isLoading)
 
+	const openPaymentModal = usePaymentModalStore(state => state.open)
+
 	const [email, setEmail] = useState(user.email ?? '')
 	const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl ?? '')
 	const [avatarError, setAvatarError] = useState('')
@@ -178,6 +181,30 @@ function ProfileModalContent({ user, close }: ProfileModalContentProps) {
 				error instanceof Error ? error.message : 'Не удалось загрузить аватар',
 			)
 		}
+	}
+
+	function canPayOrder(order: {
+		status: string
+		paymentMethod: string
+		paymentStatus: string
+		paymentExpiresAt: string | null
+	}) {
+		if (order.paymentMethod !== 'Картой онлайн') {
+			return false
+		}
+
+		if (order.paymentStatus !== 'Ожидает оплаты') {
+			return false
+		}
+
+		if (order.status === 'Отменен') {
+			return false
+		}
+
+		if (!order.paymentExpiresAt) {
+			return true
+		}
+		return new Date(order.paymentExpiresAt).getTime() > new Date().getTime()
 	}
 
 	return (
@@ -327,6 +354,14 @@ function ProfileModalContent({ user, close }: ProfileModalContentProps) {
 										<div className='mt-3 rounded-2xl bg-blue-50 px-4 py-3 text-right font-bold text-slate-950'>
 											{order.totalPrice.toLocaleString('ru-RU')} ₽
 										</div>
+										{canPayOrder(order) && (
+											<button
+												onClick={() => openPaymentModal(order.id)}
+												className='mt-3 w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700'
+											>
+												Оплатить заказ
+											</button>
+										)}
 									</div>
 								))}
 							</div>
