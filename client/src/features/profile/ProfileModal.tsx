@@ -108,6 +108,7 @@ function ProfileModalContent({ user, close }: ProfileModalContentProps) {
 	const logout = useAuthStore(state => state.logout)
 
 	const resetCart = useCartStore(state => state.resetCart)
+	const fetchCart = useCartStore(state => state.fetchCart)
 	const resetFavorites = useFavoritesStore(state => state.resetFavorites)
 	const resetOrders = useOrderStore(state => state.resetOrders)
 
@@ -122,8 +123,13 @@ function ProfileModalContent({ user, close }: ProfileModalContentProps) {
 	const [avatarError, setAvatarError] = useState('')
 
 	useEffect(() => {
-		void fetchOrders()
-	}, [fetchOrders])
+		async function loadProfileData() {
+			await fetchOrders()
+			await fetchCart()
+		}
+
+		void loadProfileData()
+	}, [fetchOrders, fetchCart])
 
 	async function handleSave() {
 		try {
@@ -202,8 +208,9 @@ function ProfileModalContent({ user, close }: ProfileModalContentProps) {
 		}
 
 		if (!order.paymentExpiresAt) {
-			return true
+			return false
 		}
+
 		return new Date(order.paymentExpiresAt).getTime() > new Date().getTime()
 	}
 

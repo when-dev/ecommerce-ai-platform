@@ -8,28 +8,39 @@ import { cartRouter } from './modules/cart/cart.routes.js'
 import { favoritesRouter } from './modules/favorites/favorites.routes.js'
 import { ordersRouter } from './modules/orders/orders.routes.js'
 import { assistantRouter } from './modules/assistant/assistant.routes.js'
-import { uploadsRouter } from "./modules/uploads/uploads.routes.js";
+import { uploadsRouter } from './modules/uploads/uploads.routes.js'
 
 export const app = express()
 
+const allowedOrigins = ['http://localhost:5173', process.env.CLIENT_URL].filter(
+	Boolean,
+)
+
 app.use(
 	cors({
-		origin: 'http://localhost:5173',
+		origin(origin, callback) {
+			if (!origin || allowedOrigins.includes(origin)) {
+				callback(null, true)
+				return
+			}
+
+			callback(new Error('Not allowed by CORS'))
+		},
 		credentials: true,
 	}),
 )
 
 app.use(express.json())
 
-app.use("/uploads", express.static(path.resolve("uploads")));
+app.use('/uploads', express.static(path.resolve('uploads')))
 
 app.use('/auth', authRouter)
 app.use('/products', productsRouter)
 app.use('/cart', cartRouter)
 app.use('/favorites', favoritesRouter)
 app.use('/orders', ordersRouter)
-app.use("/assistant", assistantRouter);
-app.use("/uploads", uploadsRouter);
+app.use('/assistant', assistantRouter)
+app.use('/uploads', uploadsRouter)
 
 app.get('/health', async (_req, res) => {
 	const dbResult = await pool.query('SELECT NOW()')

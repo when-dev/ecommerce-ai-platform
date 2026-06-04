@@ -23,6 +23,29 @@ async function restoreStockForOrder(orderId: number) {
 	}
 }
 
+async function restoreCartForOrder(userId: number, orderId: number) {
+	const itemsResult = await pool.query(
+		`
+		SELECT product_id, quantity
+		FROM order_items
+		WHERE order_id = $1
+		`,
+		[orderId],
+	)
+
+	for (const item of itemsResult.rows) {
+		await pool.query(
+			`
+			INSERT INTO cart_items (user_id, product_id, quantity)
+			VALUES ($1, $2, $3)
+			ON CONFLICT (user_id, product_id)
+			DO UPDATE SET quantity = cart_items.quantity + EXCLUDED.quantity
+			`,
+			[userId, item.product_id, item.quantity],
+		)
+	}
+}
+
 async function cancelExpiredOrders(userId: number) {
 	const expiredOrdersResult = await pool.query(
 		`
@@ -39,15 +62,16 @@ async function cancelExpiredOrders(userId: number) {
 
 	for (const order of expiredOrdersResult.rows) {
 		await restoreStockForOrder(order.id)
+		await restoreCartForOrder(userId, order.id)
 
 		await pool.query(
 			`
 			UPDATE orders
 			SET status = 'Отменен',
 				payment_status = 'Не оплачено'
-			WHERE id = $1
+			WHERE id = $1 AND user_id = $2
 			`,
-			[order.id],
+			[order.id, userId],
 		)
 	}
 }
@@ -279,14 +303,15 @@ export async function payOrder(userId: number, orderId: number) {
 		new Date(order.payment_expires_at).getTime() < Date.now()
 	) {
 		await restoreStockForOrder(orderId)
+		await restoreCartForOrder(userId, orderId)
 
 		await pool.query(
 			`
-			UPDATE orders
-			SET status = 'Отменен',
-				payment_status = 'Не оплачено'
-			WHERE id = $1 AND user_id = $2
-			`,
+		UPDATE orders
+		SET status = 'Отменен',
+			payment_status = 'Не оплачено'
+		WHERE id = $1 AND user_id = $2
+		`,
 			[orderId, userId],
 		)
 

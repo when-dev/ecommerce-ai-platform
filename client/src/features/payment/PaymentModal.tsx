@@ -80,6 +80,10 @@ export function PaymentModal() {
 		try {
 			setIsLoading(true)
 
+			if (!orderId) {
+				return
+			}
+
 			await payOrderRequest(orderId)
 			await fetchOrders()
 
