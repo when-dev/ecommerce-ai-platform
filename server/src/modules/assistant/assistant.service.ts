@@ -1,5 +1,5 @@
-import { pool } from '../../db/pool'
-import { env } from '../../config/env'
+import { pool } from '../../db/pool.js'
+import { env } from '../../config/env.js'
 
 type AskAssistantParams = {
 	userId?: number | null

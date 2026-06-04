@@ -12,18 +12,25 @@ import { uploadsRouter } from './modules/uploads/uploads.routes.js'
 
 export const app = express()
 
-const allowedOrigins = ['http://localhost:5173', process.env.CLIENT_URL].filter(
-	Boolean,
-)
+const allowedOrigins = [
+	'http://localhost:5173',
+	process.env.CLIENT_URL,
+].filter(Boolean)
 
 app.use(
 	cors({
 		origin(origin, callback) {
-			if (!origin || allowedOrigins.includes(origin)) {
+			if (!origin) {
 				callback(null, true)
 				return
 			}
 
+			if (allowedOrigins.includes(origin)) {
+				callback(null, true)
+				return
+			}
+
+			console.log('Blocked by CORS:', origin)
 			callback(new Error('Not allowed by CORS'))
 		},
 		credentials: true,
